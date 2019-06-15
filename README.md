@@ -1,4 +1,4 @@
-# KX-1
+# KX1
 
 LinuxCNC configurations for the Sieg KX1 CNC Mill, also known as the Little Machine Shop CNC Model 3501 CNC Milling Machine.
 
