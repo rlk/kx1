@@ -4,7 +4,7 @@ loadrt hal_parport cfg="0 out"
 setp parport.0.reset-time 5000
 loadrt stepgen step_type=0,0,0,0,0 ctrl_type=p,p,p,p,v
 loadrt charge_pump
-loadrt scale
+loadrt pwmgen output_type=1
 
 #-------------------------------------------------------------------------------
 
@@ -21,27 +21,37 @@ addf stepgen.update-freq servo-thread
 
 #-------------------------------------------------------------------------------
 
-#net estop-out       => parport.0.pin-01-out
-net xstep           => parport.0.pin-02-out
+#net estop-out      => parport.0.pin-01-out
+net xstep          => parport.0.pin-02-out
+net xdir           => parport.0.pin-03-out
+net ystep          => parport.0.pin-04-out
+net ydir           => parport.0.pin-05-out
+net zstep          => parport.0.pin-06-out
+net zdir           => parport.0.pin-07-out
+net astep          => parport.0.pin-08-out
+net adir           => parport.0.pin-09-out
+net estop-ext      <= parport.0.pin-10-in
+net both-home-z    <= parport.0.pin-11-in-not
+net both-home-y    <= parport.0.pin-12-in-not
+net both-home-x    <= parport.0.pin-13-in-not
+net spindle-pwm pwmgen.0.pwm           => parport.0.pin-14-out
+net spindle-fwd motion.spindle-forward => parport.0.pin-16-out
+net charge-pump                        => parport.0.pin-17-out
+
 setp parport.0.pin-02-out-reset 1
-net xdir            => parport.0.pin-03-out
-net ystep           => parport.0.pin-04-out
 setp parport.0.pin-04-out-reset 1
-net ydir            => parport.0.pin-05-out
-net zstep           => parport.0.pin-06-out
 setp parport.0.pin-06-out-reset 1
-net zdir            => parport.0.pin-07-out
-net astep           => parport.0.pin-08-out
 setp parport.0.pin-08-out-reset 1
-net adir            => parport.0.pin-09-out
-net spindle-cw      => parport.0.pin-16-out
-net charge-pump     => parport.0.pin-17-out
 setp parport.0.pin-14-out-invert 1
 
-net estop-ext <= parport.0.pin-10-in
-net both-home-x <= parport.0.pin-13-in-not
-net both-home-y <= parport.0.pin-12-in-not
-net both-home-z <= parport.0.pin-11-in-not
+#-------------------------------------------------------------------------------
+
+addf pwmgen.update servo-thread
+addf pwmgen.make-pulses base-thread
+net spindle-speed-cmd motion.spindle-speed-out => pwmgen.0.value
+net spindle-on        motion.spindle-on        => pwmgen.0.enable
+setp pwmgen.0.scale 7000
+setp pwmgen.0.offset 0
 
 #-------------------------------------------------------------------------------
 
@@ -91,34 +101,6 @@ net both-home-z => axis.2.home-sw-in
 #net both-home-z => axis.2.pos-lim-sw-in
 
 #-------------------------------------------------------------------------------
-
-setp scale.0.in 0
-
-# adjust spindle speed here if required
-setp scale.0.gain 0.9
-
-# The suggested gain was not scientifically tested, but based on the motor speed maxing out at approx S3500, which is the theoretical maximum for a KX3.
-
-setp scale.0.offset -50
-# A negative offset appears to yield the best results for low speeds allowing for approx 60 rpm at S60.
-
-addf scale.0 servo-thread
-setp stepgen.4.position-scale 1
-setp stepgen.4.maxvel 3500 # maximum for standard KX3
-setp stepgen.4.steplen 1
-setp stepgen.4.stepspace 0
-setp stepgen.4.dirhold 20000
-setp stepgen.4.dirsetup 20000
-setp stepgen.4.maxaccel 2000
-
-net spindle-enable <= motion.spindle-on => stepgen.4.enable
-net spindle-cmd motion.spindle-speed-out => scale.0.in
-
-net spindle-freq <= scale.0.out => stepgen.4.velocity-cmd
-net spindle-out <= stepgen.4.step => parport.0.pin-14-out
-
-#-------------------------------------------------------------------------------
-# Charge pump must not be connected to ESTOP!
 
 net charge-pump <= charge-pump.out
 
