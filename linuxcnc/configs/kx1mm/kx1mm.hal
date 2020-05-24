@@ -51,7 +51,7 @@ addf pwmgen.update servo-thread
 addf pwmgen.make-pulses base-thread
 net spindle-speed-cmd motion.spindle-speed-out => pwmgen.0.value
 net spindle-on        motion.spindle-on        => pwmgen.0.enable
-setp pwmgen.0.scale 7000
+setp pwmgen.0.scale 16200
 setp pwmgen.0.offset 0
 
 #-------------------------------------------------------------------------------
